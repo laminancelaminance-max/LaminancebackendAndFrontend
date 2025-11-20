@@ -617,4 +617,109 @@ export async function userDetail(request,response){
     }
 }
 
+export const getAllUsersController = async (req, res) => {
+    try {
+        const users = await UserModel.find({})
+            .select('-password -refreshToken -forgot_password_otp -forgot_password_expiry')
+            .sort({ createdAt: -1 });
 
+        return res.status(200).json({
+            message: 'Users fetched successfully',
+            data: users,
+            success: true,
+            error: false
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error fetching users',
+            error: error.message,
+            success: false
+        });
+    }
+}
+
+// Update user status (Admin only)
+export const updateUserStatusController = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { status } = req.body;
+
+        if (!['active', 'inactive', 'suspended'].includes(status)) {
+            return res.status(400).json({
+                message: 'Invalid status value',
+                error: true,
+                success: false
+            });
+        }
+
+        const user = await UserModel.findByIdAndUpdate(
+            userId,
+            { status },
+            { new: true }
+        ).select('-password -refreshToken');
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'User not found',
+                error: true,
+                success: false
+            });
+        }
+
+        return res.status(200).json({
+            message: `User status updated to ${status}`,
+            data: user,
+            success: true,
+            error: false
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error updating user status',
+            error: error.message,
+            success: false
+        });
+    }
+}
+
+// Update user role (Admin only)
+export const updateUserRoleController = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { role } = req.body;
+
+        if (!['user', 'admin'].includes(role)) {
+            return res.status(400).json({
+                message: 'Invalid role value',
+                error: true,
+                success: false
+            });
+        }
+
+        const user = await UserModel.findByIdAndUpdate(
+            userId,
+            { role },
+            { new: true }
+        ).select('-password -refreshToken');
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'User not found',
+                error: true,
+                success: false
+            });
+        }
+
+        return res.status(200).json({
+            message: `User role updated to ${role}`,
+            data: user,
+            success: true,
+            error: false
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error updating user role',
+            error: error.message,
+            success: false
+        });
+    }
+}

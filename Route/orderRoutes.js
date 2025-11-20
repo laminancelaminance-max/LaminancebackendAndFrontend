@@ -9,7 +9,7 @@ import {
   deleteOrder,
   getOrderStats
 } from '../controller/orderController.js';
-import auth from '../middleware/auth.js';
+import { auth, adminAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 router.use(auth);

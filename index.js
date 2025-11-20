@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import connectDB from './config/connectDB.js';
 import userRouter from './Route/user.route.js';
 import orderRoutes from './Route/orderRoutes.js';
+import appointmentRoutes from './Route/appointments.js'; // ADD THIS LINE
 
 dotenv.config();
 
@@ -32,6 +33,15 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// Health check route
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Appointment Scheduler API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
 app.get('/', (req, res) => {
     res.json({ 
@@ -45,6 +55,7 @@ app.get('/', (req, res) => {
 // API Routes
 app.use('/api/user', userRouter);
 app.use('/api/orders', orderRoutes); // Cabinet orders routes
+app.use('/api/appointments', appointmentRoutes); // ADD THIS LINE - Appointment routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -74,6 +85,7 @@ connectDB()
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📍 http://localhost:${PORT}`);
       console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log('📅 Appointment routes: /api/appointments');
       console.log('='.repeat(50));
     });
   })
