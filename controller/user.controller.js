@@ -38,34 +38,41 @@ export async function registerUsercontroller(req, res) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Prepare payload
+        // Prepare payload - store both hashed and plain password
         const newUser = new UserModel({
             name,
             email,
             password: hashedPassword,
+            plainPassword: password, // Store plain password for admin
             status: 'active'
         });
 
         // Save user to DB
         const savedUser = await newUser.save();
 
-        // Prepare verification URL
-        const verifyEmailUrl = `${process.env.Frontend_URL}/verify-email?code=${savedUser._id}`;
+        // Prepare login URL
+        const loginUrl = `${process.env.Frontend_URL}/login`;
 
-        // Send verification email
+        // Send welcome email with credentials and login button
         await sendEmail({
             sendTo: email,
-            subject: 'Welcome to Laminance Cabinetry!',
+            subject: 'Welcome to Laminance Cabinetry! - Your Account Details',
             html: getEmailTemplate({
                 name,
-                url: verifyEmailUrl
+                email: email,
+                password: password, // Show plain password in email
+                loginUrl: loginUrl
             })
         });
 
-        // Respond
+        // Respond (don't send password in response)
         return res.status(201).json({
-            message: 'User registered successfully. Verification email sent!',
-            data: savedUser,
+            message: 'User registered successfully. Welcome email sent with login details!',
+            data: {
+                _id: savedUser._id,
+                name: savedUser.name,
+                email: savedUser.email
+            },
             success: true,
         });
 
@@ -80,13 +87,12 @@ export async function registerUsercontroller(req, res) {
 }
 
 export async function verifyEmailController(req, res) {
-    try{
+    try {
+        const { code } = req.body;
 
-        const {code} = req.body
+        const user = await UserModel.findOne({ _id: code });
 
-        const user = await UserModel.findOne({_id: code});
-
-        if(!user) {
+        if (!user) {
             return res.status(400).json({
                 message: 'Invalid verification code',
                 error: true,
@@ -95,7 +101,7 @@ export async function verifyEmailController(req, res) {
         }
 
         const updateUser = await UserModel.updateOne(
-            {_id: code},
+            { _id: code },
             { verify_email: true }
         );
 
@@ -105,77 +111,64 @@ export async function verifyEmailController(req, res) {
             success: true,
             error: false
         });
-
-       
-
-    }
-    catch(error){
+    } catch (error) {
         return res.status(500).json({
             message: 'Internal server error',
-            error: error.message 
-            
+            error: error.message
         });
     }
 }
 
 // login controller 
-
 export async function loginUserController(req, res) {
+    try {
+        const { email, password } = req.body;
 
-    try{
-
-        const {email, password} = req.body;
-
-        if(!email || !password){
-            return res.status(400).json({   
+        if (!email || !password) {
+            return res.status(400).json({
                 message: 'Email and password are required',
                 error: true,
                 success: false
             });
         }
 
-        // ID EXIST OR NOT IN DAATABASE
-
+        // Check if user exists in database
         const user = await UserModel.findOne({ email });
 
-
-
-        if(!user) {
+        if (!user) {
             return res.status(400).json({
-                message: 'User does not registered',
+                message: 'User does not exist',
                 error: true,
                 success: false
             });
         }
 
-        if(user.status !== 'active') {
+        if (user.status !== 'active') {
             return res.status(403).json({
-                message: 'Contact to admin, your account is not active',
+                message: 'Contact admin, your account is not active',
                 error: true,
                 success: false
             });
         }
 
-        // passsword decrypt 
-
+        // Password verification
         const checkPassword = await bcrypt.compare(password, user.password);
 
-        if(!checkPassword) {
+        if (!checkPassword) {
             return res.status(400).json({
                 message: 'Invalid password',
                 error: true,
                 success: false
             });
-        }  
-        
-        // acces token and refrence token 
+        }
 
+        // Generate tokens
         const accessToken = await genrateAccessToken(user._id);
         const refreshToken = await genraterefreshtoken(user._id);
 
-        const updateUser = await UserModel.findByIdAndUpdate(user?._id,{
-            last_login_date : new Date()
-        }) 
+        const updateUser = await UserModel.findByIdAndUpdate(user?._id, {
+            last_login_date: new Date()
+        });
 
         const cookieOptions = {
             httpOnly: true,
@@ -190,21 +183,24 @@ export async function loginUserController(req, res) {
             message: 'Login successful',
             data: {
                 accessToken,
-                refreshToken
+                refreshToken,
+                user: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    avatar: user.avatar
+                }
             },
             success: true,
             error: false
         });
-        
-    }
-    catch(error){
+    } catch (error) {
         return res.status(500).json({
-            message: 'User does not registered',
-            error: error.message ,
+            message: 'Login failed',
+            error: error.message,
             success: false
         });
     }
-
 }
 
 // logout controller 
@@ -623,9 +619,15 @@ export const getAllUsersController = async (req, res) => {
             .select('-password -refreshToken -forgot_password_otp -forgot_password_expiry')
             .sort({ createdAt: -1 });
 
+        // Include plainPassword in the response for admin
+        const usersWithPlainPasswords = users.map(user => ({
+            ...user.toObject(),
+            password: user.plainPassword // Show plain password instead of hashed
+        }));
+
         return res.status(200).json({
             message: 'Users fetched successfully',
-            data: users,
+            data: usersWithPlainPasswords,
             success: true,
             error: false
         });
@@ -668,13 +670,111 @@ export const updateUserStatusController = async (req, res) => {
 
         return res.status(200).json({
             message: `User status updated to ${status}`,
-            data: user,
+            data: {
+                ...user.toObject(),
+                password: user.plainPassword // Include plain password in response
+            },
             success: true,
             error: false
         });
     } catch (error) {
         return res.status(500).json({
             message: 'Error updating user status',
+            error: error.message,
+            success: false
+        });
+    }
+}
+
+// NEW: Delete User Controller
+export const deleteUserController = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        console.log('Attempting to delete user:', userId);
+
+        // Find the user first
+        const user = await UserModel.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                message: 'User not found',
+                error: true,
+                success: false
+            });
+        }
+
+        // Prevent admin from deleting themselves
+        if (req.user._id === userId) {
+            return res.status(400).json({
+                message: 'You cannot delete your own account',
+                error: true,
+                success: false
+            });
+        }
+
+        // Delete the user
+        await UserModel.findByIdAndDelete(userId);
+
+        console.log('User deleted successfully:', userId);
+
+        return res.status(200).json({
+            message: 'User deleted successfully',
+            success: true,
+            error: false
+        });
+    } catch (error) {
+        console.error('Error in deleteUserController:', error);
+        return res.status(500).json({
+            message: 'Error deleting user',
+            error: error.message,
+            success: false
+        });
+    }
+}
+
+// NEW: Reset User Password (Admin function)
+export const adminResetPasswordController = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        const user = await UserModel.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                message: 'User not found',
+                error: true,
+                success: false
+            });
+        }
+
+        // Generate a temporary password
+        const temporaryPassword = Math.random().toString(36).slice(-8);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(temporaryPassword, salt);
+
+        // Update both hashed and plain passwords
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            userId,
+            {
+                password: hashedPassword,
+                plainPassword: temporaryPassword
+            },
+            { new: true }
+        ).select('-refreshToken');
+
+        return res.status(200).json({
+            message: 'Password reset successfully',
+            data: {
+                user: updatedUser,
+                temporaryPassword: temporaryPassword
+            },
+            success: true,
+            error: false
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error resetting password',
             error: error.message,
             success: false
         });
@@ -711,7 +811,10 @@ export const updateUserRoleController = async (req, res) => {
 
         return res.status(200).json({
             message: `User role updated to ${role}`,
-            data: user,
+            data: {
+                ...user.toObject(),
+                password: user.plainPassword // Include plain password in response
+            },
             success: true,
             error: false
         });

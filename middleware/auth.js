@@ -24,8 +24,8 @@ const auth = async (req, res, next) => {
       });
     }
 
-    // Get user details including role
-    const user = await UserModel.findById(decoded.id).select('role status');
+    // Get full user details including role
+    const user = await UserModel.findById(decoded.id).select('-password');
     
     if(!user || user.status !== 'active'){
       return res.status(401).json({
@@ -35,6 +35,8 @@ const auth = async (req, res, next) => {
       });
     }
 
+    // Set the full user object on req.user
+    req.user = user;
     req.userId = decoded.id;
     req.userRole = user.role;
     next();

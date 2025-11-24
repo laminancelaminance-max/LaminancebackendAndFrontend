@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Password is required"],
   },
+  plainPassword: {  // NEW: Store plain password for admin viewing
+    type: String,
+    default: ""
+  },
   avatar: {
     type: String,
     default: ""

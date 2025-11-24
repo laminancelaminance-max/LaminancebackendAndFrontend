@@ -14,7 +14,9 @@ import {
     verifyForgotPasswordOtpController,
     getAllUsersController,
     updateUserStatusController,
-    updateUserRoleController
+    updateUserRoleController,
+    deleteUserController, // Make sure this is imported
+    adminResetPasswordController // Make sure this is imported
 } from '../controller/user.controller.js';
 import upload from '../middleware/Multer.js';
 
@@ -39,5 +41,7 @@ userRouter.get("/user-Detail", auth, userDetail)
 userRouter.get("/admin/users", adminAuth, getAllUsersController)
 userRouter.put("/admin/users/:userId/status", adminAuth, updateUserStatusController)
 userRouter.put("/admin/users/:userId/role", adminAuth, updateUserRoleController)
+userRouter.delete("/admin/users/:userId", adminAuth, deleteUserController) // DELETE route
+userRouter.post("/admin/users/:userId/reset-password", adminAuth, adminResetPasswordController)
 
 export default userRouter;
