@@ -14,10 +14,11 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const sendEmail = async ({ sendTo, subject, html }) => {
   try {
     const data = await resend.emails.send({
-      from: "Laminance Cabinetry <contactus@laminance.com>",
+      from: "Laminance Cabinetry <contactus@contact.laminance.com>",
+      replyTo: "contactus@laminance.com",
       to: sendTo,
       subject,
-      html,
+      html, 
     });
     console.log("Email sent successfully:", data);
     return data;

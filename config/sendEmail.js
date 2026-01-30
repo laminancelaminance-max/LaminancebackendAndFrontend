@@ -55,7 +55,7 @@ const sendEmail = async ({ sendTo, subject, html }) => {
     const recipients = Array.isArray(sendTo) ? sendTo : [sendTo];
 
     const data = await resend.emails.send({
-      from: "Laminance Cabinetry <contactus@laminance.com>", // verified domain
+      from: "Laminance Cabinetry <contactus@contact.laminance.com>", // verified domain
       to: recipients,
       subject,
       html,
