@@ -1,0 +1,1 @@
+﻿console.log('Test file created successfully'); require('dotenv').config(); const key = process.env.RESEND_API_KEY; console.log('RESEND_API_KEY:', key ? Found ( chars) : 'NOT FOUND'); if (key) { console.log('First 8 chars:', key.substring(0, 8)); }

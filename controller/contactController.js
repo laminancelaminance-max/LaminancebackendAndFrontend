@@ -308,7 +308,7 @@
 
 
 import Contact from '../models/Contact.js';
-import sendEmail from '../Utils/emailService.js';
+import { sendEmail } from '../Utils/emailService.js'; // Import sendEmail from '../Utils/emailService.js';
 import { sendAppointmentEmail, testAppointmentEmail } from '../Utils/emailService.js';
 import { 
   getAdminContactEmailTemplate, 

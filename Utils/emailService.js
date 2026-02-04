@@ -1,29 +1,56 @@
 import { Resend } from "resend";
 import dotenv from "dotenv";
-import { getAppointmentEmailTemplate } from "../Utils/emailTemplate.js";
+import { getAppointmentEmailTemplate } from "./emailTemplate.js";
 
+// Load environment variables
 dotenv.config();
 
+// Debug logging
+console.log('=== EMAIL SERVICE INITIALIZATION ===');
+console.log('RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
+
 if (!process.env.RESEND_API_KEY) {
+  console.error('❌ CRITICAL ERROR: Missing Resend API Key in environment variables');
   throw new Error("Missing Resend API Key in environment variables");
 }
 
+console.log('✅ Resend API Key loaded successfully');
+console.log('Key starts with:', process.env.RESEND_API_KEY.substring(0, 10));
+
+// Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
+console.log('✅ Resend initialized');
 
 // Generic sendEmail function
-const sendEmail = async ({ sendTo, subject, html }) => {
+export const sendEmail = async ({ sendTo, subject, html }) => {
   try {
+    console.log('📧 SENDING EMAIL:', {
+      to: sendTo,
+      subject: subject,
+      from: "Laminance Cabinetry <contactus@contact.laminance.com>"
+    });
+
     const data = await resend.emails.send({
       from: "Laminance Cabinetry <contactus@contact.laminance.com>",
       replyTo: "contactus@laminance.com",
       to: sendTo,
-      subject,
-      html, 
+      subject: subject,
+      html: html, 
     });
-    console.log("Email sent successfully:", data);
+    
+    console.log("✅ Email sent successfully. Message ID:", data.id);
     return data;
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("❌ Error sending email:");
+    console.error("Error message:", error.message);
+    console.error("Error details:", error);
+    
+    // Check for specific error types
+    if (error.message.includes("401")) {
+      console.error("🔑 401 Error: Invalid or missing API key");
+      console.error("Current API key prefix:", process.env.RESEND_API_KEY?.substring(0, 10));
+    }
+    
     throw error;
   }
 };
@@ -49,6 +76,8 @@ const calculateEndTime = (startTime, duration) => {
 // Function to send appointment email
 export const sendAppointmentEmail = async (appointment) => {
   try {
+    console.log('📅 SENDING APPOINTMENT EMAIL TO:', appointment.email);
+    
     // Generate the HTML content using the template
     const htmlContent = getAppointmentEmailTemplate({
       appointment,
@@ -66,7 +95,7 @@ export const sendAppointmentEmail = async (appointment) => {
     return { success: true, data: emailData };
 
   } catch (error) {
-    console.error("❌ Error sending appointment email:", error);
+    console.error("❌ Error sending appointment email:", error.message);
     throw new Error(`Failed to send appointment email: ${error.message}`);
   }
 };
@@ -96,12 +125,22 @@ export const testAppointmentEmail = async () => {
       virtualMeetingLink: ""
     };
 
+    console.log('🧪 TESTING APPOINTMENT EMAIL FUNCTION...');
     const result = await sendAppointmentEmail(testAppointment);
     return { success: true, result };
   } catch (error) {
+    console.error('❌ Test failed:', error.message);
     return { success: false, error: error.message };
   }
 };
 
-// Export the generic sendEmail function as default
-export default sendEmail;
+// Email template helper functions (now ES Module exports)
+export const generateAdminEmail = (contactData) => {
+  // ... your existing generateAdminEmail function code ...
+  return `...`; // Your existing template
+};
+
+export const generateUserEmail = (contactData) => {
+  // ... your existing generateUserEmail function code ...
+  return `...`; // Your existing template
+};
