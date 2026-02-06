@@ -406,6 +406,92 @@
 // export default ContactForm;
 
 
+// import mongoose from 'mongoose';
+
+// const addressSchema = new mongoose.Schema({
+//   street: {
+//     type: String,
+//     default: ''
+//   },
+//   city: {
+//     type: String,
+//     default: ''
+//   },
+//   state: {
+//     type: String,
+//     default: ''
+//   },
+//   country: {
+//     type: String,
+//     default: ''
+//   },
+//   zipCode: {
+//     type: String,
+//     default: ''
+//   }
+// });
+
+// const contactSchema = new mongoose.Schema({
+//   name: {
+//     type: String,
+//     required: [true, 'Name is required'],
+//     trim: true
+//   },
+//   email: {
+//     type: String,
+//     required: [true, 'Email is required'],
+//     trim: true,
+//     lowercase: true,
+//     match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address']
+//   },
+//   phone: {
+//     type: String,
+//     default: '',
+//     trim: true
+//   },
+//   address: {
+//     type: addressSchema,
+//     default: () => ({})
+//   },
+//   subject: {
+//     type: String,
+//     required: [true, 'Subject is required'],
+//     trim: true
+//   },
+//   message: {
+//     type: String,
+//     required: [true, 'Message is required'],
+//     trim: true
+//   },
+//   sendCopy: {
+//     type: Boolean,
+//     default: true
+//   },
+//   status: {
+//     type: String,
+//     enum: ['new', 'read', 'in-progress', 'resolved'],
+//     default: 'new'
+//   },
+//   ipAddress: {
+//     type: String,
+//     default: ''
+//   },
+//   userAgent: {
+//     type: String,
+//     default: ''
+//   }
+// }, {
+//   timestamps: true
+// });
+
+// contactSchema.index({ status: 1, createdAt: -1 });
+// contactSchema.index({ email: 1 });
+
+// const Contact = mongoose.model('Contact', contactSchema);
+
+// export default Contact;
+
+
 import mongoose from 'mongoose';
 
 const addressSchema = new mongoose.Schema({
@@ -431,23 +517,42 @@ const addressSchema = new mongoose.Schema({
   }
 });
 
+const geoLocationSchema = new mongoose.Schema({
+  country: {
+    type: String,
+    default: 'unknown'
+  },
+  region: {
+    type: String,
+    default: 'unknown'
+  },
+  city: {
+    type: String,
+    default: 'unknown'
+  }
+});
+
 const contactSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Name is required'],
-    trim: true
+    trim: true,
+    minlength: [2, 'Name must be at least 2 characters'],
+    maxlength: [100, 'Name cannot exceed 100 characters']
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
     trim: true,
     lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address']
+    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'],
+    maxlength: [100, 'Email cannot exceed 100 characters']
   },
   phone: {
     type: String,
+    required: [true, 'Phone number is required'],
     default: '',
-    trim: true
+    trim: true,
+    maxlength: [20, 'Phone number cannot exceed 20 characters']
   },
   address: {
     type: addressSchema,
@@ -456,12 +561,16 @@ const contactSchema = new mongoose.Schema({
   subject: {
     type: String,
     required: [true, 'Subject is required'],
-    trim: true
+    trim: true,
+    minlength: [2, 'Subject must be at least 2 characters'],
+    maxlength: [200, 'Subject cannot exceed 200 characters']
   },
   message: {
     type: String,
     required: [true, 'Message is required'],
-    trim: true
+    trim: true,
+    minlength: [5, 'Message must be at least 5 characters'],
+    maxlength: [2000, 'Message cannot exceed 2000 characters']
   },
   sendCopy: {
     type: Boolean,
@@ -469,14 +578,45 @@ const contactSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['new', 'read', 'in-progress', 'resolved'],
+    enum: ['new', 'read', 'in-progress', 'resolved', 'spam'],
     default: 'new'
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'urgent'],
+    default: 'medium'
+  },
+  category: {
+    type: String,
+    enum: ['general', 'quote', 'appointment', 'complaint', 'feedback', 'other'],
+    default: 'general'
   },
   ipAddress: {
     type: String,
-    default: ''
+    default: '0.0.0.0',
+    index: true
   },
   userAgent: {
+    type: String,
+    default: ''
+  },
+  submittedFrom: {
+    type: String,
+    default: 'unknown'
+  },
+  geoLocation: {
+    type: geoLocationSchema,
+    default: () => ({})
+  },
+  notes: {
+    type: String,
+    default: ''
+  },
+  isBlocked: {
+    type: Boolean,
+    default: false
+  },
+  blockedReason: {
     type: String,
     default: ''
   }
@@ -484,8 +624,42 @@ const contactSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Indexes for better performance
 contactSchema.index({ status: 1, createdAt: -1 });
 contactSchema.index({ email: 1 });
+contactSchema.index({ ipAddress: 1 });
+contactSchema.index({ createdAt: -1 });
+contactSchema.index({ 'geoLocation.country': 1 });
+contactSchema.index({ isBlocked: 1 });
+
+// Pre-save middleware to prevent spam
+contactSchema.pre('save', function(next) {
+  // Basic spam check (can be enhanced)
+  const spamKeywords = ['viagra', 'cialis', 'casino', 'porn', 'xxx'];
+  const message = this.message.toLowerCase();
+  
+  for (const keyword of spamKeywords) {
+    if (message.includes(keyword)) {
+      this.status = 'spam';
+      this.isBlocked = true;
+      this.blockedReason = `Contains spam keyword: ${keyword}`;
+      break;
+    }
+  }
+  
+  next();
+});
+
+// Static method to check if IP is blocked
+contactSchema.statics.isIPBlocked = async function(ip) {
+  const blockedIPs = await this.find({
+    ipAddress: ip,
+    isBlocked: true,
+    createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
+  }).limit(5);
+  
+  return blockedIPs.length >= 5; // Block if 5 submissions in 24 hours
+};
 
 const Contact = mongoose.model('Contact', contactSchema);
 
