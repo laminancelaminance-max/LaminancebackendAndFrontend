@@ -799,6 +799,7 @@ const getUserAgent = (req) => {
 };
 
 // Submit contact form - UPDATED WITH IP HANDLING
+// Submit contact form - FIXED VERSION
 export const submitContact = async (req, res) => {
   try {
     console.log('Contact form submission received from:', {
@@ -811,7 +812,7 @@ export const submitContact = async (req, res) => {
     const { name, email, phone, address, subject, message, sendCopy = true } = req.body;
 
     // Validate required fields
-    if (!name  || !phone || !subject || !message) {
+    if (!name || !phone || !subject || !message) {
       console.log('Validation failed - missing required fields');
       return res.status(400).json({
         success: false,
@@ -819,8 +820,6 @@ export const submitContact = async (req, res) => {
       });
     }
 
-    // Validate email format
-   
     // Get client IP and user agent
     const clientIP = getClientIP(req);
     const userAgent = getUserAgent(req);
@@ -839,19 +838,19 @@ export const submitContact = async (req, res) => {
       userAgent: userAgent,
       submittedFrom: req.headers.origin || 'unknown',
       geoLocation: {
-        country: req.headers['cf-ipcountry'] || 'unknown', // Cloudflare country header
+        country: req.headers['cf-ipcountry'] || 'unknown',
         region: req.headers['cf-region'] || 'unknown'
       }
     });
 
     // Save to database
     const savedContact = await newContact.save();
-    console.log('Contact saved to database:', savedContact._id);
+    console.log('✅ Contact saved to database:', savedContact._id);
     
     // Prepare contact data for emails
     const contactData = {
       name,
-      email,
+      email: email || 'Not provided', // Handle missing email
       phone,
       address,
       subject,
@@ -862,65 +861,97 @@ export const submitContact = async (req, res) => {
       geoLocation: newContact.geoLocation
     };
 
-    // Get email templates
-    if (email && email.trim() !== '') {
-  try {
-    const adminEmailContent = getAdminContactEmailTemplate(contactData);
-    const userEmailContent = getUserContactEmailTemplate(contactData);
+    // ===== SEND EMAILS =====
+    console.log('📧 Starting email sending process...');
+    
+    const emailResults = {
+      admin: false,
+      user: false,
+      errors: []
+    };
 
-    // Admin email
+    // 1. ALWAYS send admin email (regardless of user email)
     if (process.env.ADMIN_EMAIL) {
-      await sendEmail({
-        sendTo: process.env.ADMIN_EMAIL,
-        subject: `📩 New Contact: ${subject} - Laminance Cabinetry`,
-        html: adminEmailContent
-      });
+      try {
+        console.log('📧 Sending admin email to:', process.env.ADMIN_EMAIL);
+        
+        const adminEmailContent = getAdminContactEmailTemplate(contactData);
+        
+        const adminResult = await sendEmail({
+          sendTo: process.env.ADMIN_EMAIL,
+          subject: `📩 New Contact: ${subject} - Laminance Cabinetry`,
+          html: adminEmailContent
+        });
+        
+        if (adminResult && adminResult.success) {
+          emailResults.admin = true;
+          console.log('✅ Admin email sent successfully');
+        } else {
+          emailResults.errors.push(`Admin email failed: ${adminResult?.error || 'Unknown error'}`);
+          console.error('❌ Admin email failed:', adminResult?.error);
+        }
+      } catch (adminError) {
+        emailResults.errors.push(`Admin email error: ${adminError.message}`);
+        console.error('❌ Admin email error:', adminError.message);
+      }
+    } else {
+      console.warn('⚠️ ADMIN_EMAIL not configured in .env');
+      emailResults.errors.push('ADMIN_EMAIL not configured');
     }
 
-    // User email (only if sendCopy is true)
-    if (sendCopy === true) {
-      await sendEmail({
-        sendTo: email,
-        subject: `✅ Thank You for Contacting Laminance Cabinetry`,
-        html: userEmailContent
-      });
+    // 2. Send user confirmation ONLY if email is provided AND sendCopy is true
+    if (email && email.trim() !== '' && sendCopy === true) {
+      try {
+        console.log('📧 Sending user confirmation email to:', email);
+        
+        const userEmailContent = getUserContactEmailTemplate(contactData);
+        
+        const userResult = await sendEmail({
+          sendTo: email,
+          subject: `✅ Thank You for Contacting Laminance Cabinetry`,
+          html: userEmailContent
+        });
+        
+        if (userResult && userResult.success) {
+          emailResults.user = true;
+          console.log('✅ User confirmation email sent successfully');
+        } else {
+          emailResults.errors.push(`User email failed: ${userResult?.error || 'Unknown error'}`);
+          console.error('❌ User email failed:', userResult?.error);
+        }
+      } catch (userError) {
+        emailResults.errors.push(`User email error: ${userError.message}`);
+        console.error('❌ User email error:', userError.message);
+      }
+    } else {
+      console.log('ℹ️ User confirmation email not sent:', 
+        !email ? 'No email provided' : 'sendCopy is false');
     }
 
-  } catch (emailError) {
-    console.error('⚠️ Email failed but contact saved:', emailError.message);
-    // DO NOT throw error
-  }
-}
-
-    // Wait for all email sends to complete (with timeout)
-//    if (email && email.trim() !== '') {
-//   try {
-//     // send email safely here
-//   } catch (emailError) {
-//     console.error('⚠️ Email failed but contact saved:', emailError.message);
-//   }
-// }
-
+    // Always return success if contact is saved (even if emails fail)
     res.status(201).json({
-  success: true,
-  message: 'Contact form submitted successfully',
-  data: {
-    id: savedContact._id,
-    submittedAt: savedContact.createdAt,
-    ipAddress: clientIP,
-    emailSent: Boolean(email)
-  }
-});
+      success: true,
+      message: 'Contact form submitted successfully',
+      data: {
+        id: savedContact._id,
+        submittedAt: savedContact.createdAt,
+        ipAddress: clientIP,
+        emailStatus: {
+          admin: emailResults.admin,
+          user: emailResults.user,
+          errors: emailResults.errors.length > 0 ? emailResults.errors : undefined
+        }
+      }
+    });
     
   } catch (error) {
-    console.error('Error submitting contact:', {
+    console.error('❌ Error submitting contact:', {
       message: error.message,
       stack: error.stack,
       ip: getClientIP(req),
       timestamp: new Date().toISOString()
     });
     
-    // Provide more specific error messages
     let errorMessage = 'Error submitting contact form';
     let statusCode = 500;
     

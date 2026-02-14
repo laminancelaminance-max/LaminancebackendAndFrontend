@@ -17,7 +17,7 @@ export const getAdminContactEmailTemplate = (contactData) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>New Contact Inquiry - Laminance Cabinetry</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
     
     * {
       margin: 0;
@@ -26,715 +26,671 @@ export const getAdminContactEmailTemplate = (contactData) => {
     }
     
     body {
-      font-family: 'Inter', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background: #f5f5f5;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.5;
+      color: #1e293b;
+      background: #f1f5f9;
       margin: 0;
-      padding: 20px;
+      padding: 24px;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
     
     .container {
-      max-width: 800px;
+      max-width: 720px;
       margin: 0 auto;
-      background: white;
-      border-radius: 16px;
+      background: #ffffff;
+      border-radius: 32px;
       overflow: hidden;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e8e0d0;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     }
     
-    /* Header Styles */
+    /* Modern Gradient Header */
     .header {
-      background: linear-gradient(135deg, #2c2416 0%, #1a140a 100%);
-      color: #d4b778;
-      padding: 40px 30px;
-      text-align: center;
-      border-bottom: 4px solid #d4b778;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+      padding: 48px 40px;
       position: relative;
+      overflow: hidden;
     }
     
     .header::before {
       content: '';
       position: absolute;
       top: 0;
-      left: 0;
       right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, transparent, #d4b778, transparent);
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      transform: translate(100px, -100px);
     }
     
-    .logo-container {
-      margin-bottom: 25px;
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+      border-radius: 50%;
+      transform: translate(-50px, 50px);
+    }
+    
+    .logo-wrapper {
+      position: relative;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 12px 24px 12px 20px;
+      border-radius: 100px;
+      border: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 32px;
     }
     
     .logo {
-      height: 60px;
+      height: 40px;
       width: auto;
-      filter: drop-shadow(0 4px 8px rgba(212, 183, 120, 0.4));
+      filter: brightness(0) invert(1);
     }
     
-    .header h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 32px;
-      font-weight: 700;
-      color: #f5e9d0;
-      margin-bottom: 12px;
-      letter-spacing: 0.5px;
-      line-height: 1.2;
-    }
-    
-    .header p {
-      font-size: 15px;
-      color: #d4b778;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
+    .logo-text {
+      color: #ffffff;
       font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 0.5px;
       opacity: 0.9;
     }
     
-    /* Content Styles */
-    .content {
-      padding: 40px 35px;
+    .header h1 {
+      font-size: 42px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      position: relative;
+      z-index: 10;
     }
     
-    .alert-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 25px;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
-      animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-    }
-    
-    .section-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      font-weight: 600;
-      color: #2c2416;
-      margin-bottom: 25px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #f0e9db;
+    .header .subtitle {
+      font-size: 16px;
+      color: #cbd5e1;
+      position: relative;
+      z-index: 10;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
     
-    .section-title::before {
-      content: '📋';
+    .header .subtitle span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.1);
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 14px;
+      color: #f1f5f9;
+    }
+    
+    /* Status Banner */
+    .status-banner {
+      background: #fef2f2;
+      border-left: 4px solid #dc2626;
+      margin: -24px 40px 0;
+      padding: 20px 24px;
+      border-radius: 16px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .status-icon {
+      width: 48px;
+      height: 48px;
+      background: #fee2e2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 24px;
     }
     
-    /* Contact Info Grid */
-    .contact-grid {
+    .status-text h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #991b1b;
+      margin-bottom: 4px;
+    }
+    
+    .status-text p {
+      font-size: 14px;
+      color: #b91c1c;
+    }
+    
+    .status-badge {
+      background: #dc2626;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Content Area */
+    .content {
+      padding: 48px 40px;
+    }
+    
+    /* Modern Card Grid */
+    .grid-2 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 25px;
-      margin-bottom: 35px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
     }
     
-    .contact-card {
-      background: #f8f5f0;
-      padding: 25px;
-      border-radius: 12px;
-      border-left: 5px solid #d4b778;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      border: 1px solid #e8e0d0;
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 24px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
     
-    .contact-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    .card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
     
-    .contact-card h3 {
-      color: #2c2416;
-      margin-bottom: 20px;
-      font-size: 17px;
+    .card-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-weight: 600;
+      gap: 12px;
+      margin-bottom: 20px;
     }
     
-    .info-row {
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      background: #f1f5f9;
+      border-radius: 12px;
       display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(139, 122, 78, 0.1);
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
     }
     
-    .info-row:last-child {
-      border-bottom: none;
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
     }
     
     .info-label {
-      color: #5a4c30;
-      font-weight: 500;
+      min-width: 70px;
       font-size: 14px;
-      flex: 0 0 100px;
+      color: #64748b;
+      font-weight: 500;
     }
     
     .info-value {
-      color: #2c2416;
-      font-weight: 500;
       font-size: 15px;
-      text-align: right;
+      color: #0f172a;
+      font-weight: 500;
       flex: 1;
       word-break: break-word;
     }
     
     .info-value a {
-      color: #8b6b3c;
+      color: #2563eb;
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 500;
     }
     
     .info-value a:hover {
-      color: #6b4f28;
+      color: #1d4ed8;
       text-decoration: underline;
     }
     
+    /* Address Block */
+    .address-block {
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
+    
     /* Message Section */
-    .message-section {
-      background: #f0f7ff;
-      padding: 30px;
-      border-radius: 12px;
-      margin: 35px 0;
-      border: 2px solid #dbeafe;
-      position: relative;
+    .message-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 32px;
+      margin: 32px 0;
     }
     
-    .message-section::before {
-      content: '💬';
-      position: absolute;
-      top: -15px;
-      left: 30px;
-      background: #1e40af;
-      color: white;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-    }
-    
-    .message-section h3 {
-      color: #1e40af;
-      margin-bottom: 20px;
-      font-size: 19px;
+    .message-header {
       display: flex;
       align-items: center;
       gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .message-header h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    .message-badge {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 12px;
       font-weight: 600;
     }
     
-    .message-content {
-      background: white;
-      padding: 25px;
-      border-radius: 10px;
-      border: 1px solid #e5e7eb;
+    .message-body {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
       font-size: 15px;
-      line-height: 1.8;
-      color: #4b5563;
+      line-height: 1.7;
+      color: #334155;
+      border: 1px solid #e2e8f0;
       white-space: pre-wrap;
       max-height: 300px;
       overflow-y: auto;
     }
     
     /* Action Buttons */
-    .action-buttons {
+    .action-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin: 40px 0;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin: 32px 0;
     }
     
-    .action-button {
+    .btn {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
       padding: 16px 24px;
-      border-radius: 10px;
-      text-decoration: none;
+      border-radius: 16px;
       font-weight: 600;
       font-size: 15px;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
+      text-decoration: none;
       border: none;
       cursor: pointer;
-      text-align: center;
-      min-height: 54px;
     }
     
-    .primary-button {
-      background: linear-gradient(135deg, #2c2416 0%, #1a140a 100%);
-      color: #d4b778;
-      border: 2px solid #d4b778;
+    .btn-primary {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
     }
     
-    .primary-button:hover {
-      background: #1a140a;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(44, 36, 22, 0.3);
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.2);
     }
     
-    .secondary-button {
-      background: white;
-      color: #2c2416;
-      border: 2px solid #d4b778;
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
     }
     
-    .secondary-button:hover {
-      background: #f8f5f0;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(139, 122, 78, 0.2);
+    .btn-secondary:hover {
+      background: #e2e8f0;
+      transform: translateY(-2px);
     }
     
-    /* Meta Info */
-    .meta-info {
-      margin-top: 35px;
-      padding: 25px;
-      background: linear-gradient(135deg, #f8f5f0 0%, #f0e9db 100%);
-      border-radius: 12px;
-      font-size: 13px;
-      color: #8b7a4e;
-      border-left: 5px solid #8b7a4e;
+    /* Meta Grid */
+    .meta-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 32px;
+      padding: 24px;
+      background: #f8fafc;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
     }
     
     .meta-item {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
     
     .meta-label {
-      font-weight: 600;
       font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #5a4c30;
     }
     
     .meta-value {
-      font-weight: 500;
-      font-size: 14px;
-      color: #2c2416;
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    
+    .priority-high {
+      color: #dc2626;
+      background: #fee2e2;
+      padding: 4px 8px;
+      border-radius: 40px;
+      font-size: 12px;
+      display: inline-block;
+      width: fit-content;
     }
     
     /* Footer */
     .footer {
-      background: linear-gradient(135deg, #1a140a 0%, #2c2416 100%);
-      color: #d4b778;
-      padding: 40px 35px;
-      text-align: center;
-      border-top: 1px solid rgba(212, 183, 120, 0.3);
-      position: relative;
+      background: #f8fafc;
+      padding: 40px;
+      border-top: 1px solid #e2e8f0;
     }
     
-    .footer::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(to right, transparent, #d4b778, transparent);
+    .footer-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 20px;
     }
     
     .footer-logo {
-      height: 40px;
+      height: 32px;
       width: auto;
-      filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(30deg);
-      opacity: 0.9;
-      margin-bottom: 20px;
+      opacity: 0.8;
     }
     
-    .footer-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      color: #f5e9d0;
-      margin-bottom: 10px;
-      font-weight: 600;
-    }
-    
-    .footer-info {
-      color: #d4b778;
-      font-size: 13px;
-      line-height: 1.6;
-      opacity: 0.9;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    
-    .footer-divider {
-      height: 1px;
-      background: linear-gradient(to right, transparent, rgba(212, 183, 120, 0.3), transparent);
-      margin: 25px 0;
-    }
-    
-    .contact-links {
+    .footer-links {
       display: flex;
-      justify-content: center;
-      gap: 30px;
+      gap: 24px;
       flex-wrap: wrap;
-      margin-top: 25px;
     }
     
-    .contact-link {
-      color: #d4b778;
+    .footer-link {
+      color: #64748b;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 14px;
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.3s ease;
+      transition: color 0.2s ease;
     }
     
-    .contact-link:hover {
-      color: #f5e9d0;
-      transform: translateY(-2px);
+    .footer-link:hover {
+      color: #0f172a;
     }
     
-    .copyright {
-      color: #8b7a4e;
-      font-size: 12px;
-      margin-top: 25px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(139, 122, 78, 0.2);
+    .footer-bottom {
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
     }
     
-    /* Responsive Design */
-    @media (max-width: 768px) {
+    /* Responsive */
+    @media (max-width: 640px) {
       body {
-        padding: 15px;
+        padding: 16px;
       }
       
       .container {
-        border-radius: 12px;
-        margin: 0 auto;
+        border-radius: 24px;
       }
       
       .header {
-        padding: 30px 20px;
+        padding: 32px 24px;
       }
       
       .header h1 {
-        font-size: 26px;
+        font-size: 32px;
       }
       
-      .logo {
-        height: 50px;
+      .status-banner {
+        margin: -16px 24px 0;
+        padding: 16px;
       }
       
       .content {
-        padding: 30px 25px;
+        padding: 32px 24px;
       }
       
-      .contact-grid {
+      .grid-2 {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 16px;
       }
       
-      .contact-card {
-        padding: 20px;
+      .action-grid {
+        grid-template-columns: 1fr;
       }
       
-      .info-row {
+      .meta-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .footer-top {
         flex-direction: column;
-        gap: 5px;
-        padding: 10px 0;
-      }
-      
-      .info-label {
-        flex: none;
-        font-size: 13px;
-      }
-      
-      .info-value {
-        text-align: left;
-        font-size: 14px;
-      }
-      
-      .message-section {
-        padding: 25px;
-      }
-      
-      .message-content {
-        padding: 20px;
-        font-size: 14px;
-      }
-      
-      .action-buttons {
-        grid-template-columns: 1fr;
-        gap: 15px;
-      }
-      
-      .meta-info {
-        grid-template-columns: 1fr;
-        padding: 20px;
-        gap: 15px;
-      }
-      
-      .footer {
-        padding: 30px 25px;
-      }
-      
-      .contact-links {
-        flex-direction: column;
-        gap: 15px;
-        align-items: center;
+        align-items: flex-start;
       }
     }
     
     @media (max-width: 480px) {
-      body {
-        padding: 10px;
+      .meta-grid {
+        grid-template-columns: 1fr;
       }
       
-      .container {
-        border-radius: 10px;
-      }
-      
-      .header {
-        padding: 25px 15px;
-      }
-      
-      .header h1 {
-        font-size: 22px;
-      }
-      
-      .header p {
-        font-size: 13px;
-      }
-      
-      .content {
-        padding: 20px;
-      }
-      
-      .section-title {
-        font-size: 20px;
-        margin-bottom: 20px;
-      }
-      
-      .alert-badge {
-        font-size: 12px;
-        padding: 8px 16px;
-      }
-      
-      .contact-card h3 {
-        font-size: 16px;
-      }
-      
-      .message-section {
-        padding: 20px;
-      }
-      
-      .message-content {
-        padding: 15px;
-        max-height: 250px;
-      }
-      
-      .footer {
-        padding: 25px 20px;
-      }
-      
-      .footer-title {
-        font-size: 20px;
-      }
-      
-      .action-button {
-        padding: 14px 20px;
-        font-size: 14px;
-        min-height: 50px;
-      }
-    }
-    
-    @media (max-width: 360px) {
-      .header h1 {
-        font-size: 20px;
-      }
-      
-      .section-title {
-        font-size: 18px;
-      }
-      
-      .contact-card {
-        padding: 15px;
-      }
-      
-      .message-content {
-        font-size: 13px;
+      .status-banner {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
+    <!-- Modern Header -->
     <div class="header">
-      <div class="logo-container">
+      <div class="logo-wrapper">
         <img src="https://res.cloudinary.com/dbelveonz/image/upload/v1763586727/logoimg_i3npds.png" 
              alt="Laminance Cabinetry" 
              class="logo">
+        <span class="logo-text">LAMINANCE CABINETRY</span>
       </div>
-      <h1>New Contact Inquiry</h1>
-      <p>Laminance Cabinetry Contact Form</p>
+      <h1>New Contact<br>Inquiry Received</h1>
+      <div class="subtitle">
+        <span>📬 Website Contact Form</span>
+        <span>⚡ Action Required</span>
+      </div>
     </div>
     
-    <!-- Content -->
-    <div class="content">
-      <div class="alert-badge">
-        <span>⚠️</span>
-        <span>NEW INQUIRY - ACTION REQUIRED</span>
+    <!-- Status Banner -->
+    <div class="status-banner">
+      <div class="status-left">
+        <div class="status-icon">🔔</div>
+        <div class="status-text">
+          <h3>New Customer Inquiry</h3>
+          <p>Requires attention within 24 hours</p>
+        </div>
       </div>
-      
-      <div class="section-title">Contact Information</div>
-      
-      <div class="contact-grid">
-        <div class="contact-card">
-          <h3>👤 Personal Details</h3>
-          <div class="info-row">
-            <span class="info-label">Name:</span>
-            <span class="info-value">${name || 'Not provided'}</span>
+      <div class="status-badge">PRIORITY</div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="content">
+      <!-- Contact Information Grid -->
+      <div class="grid-2">
+        <!-- Personal Details Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">👤</div>
+            <h3 class="card-title">Personal Details</h3>
           </div>
-          <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span class="info-value">
-              <a href="mailto:${email}">${email || 'Not provided'}</a>
-            </span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span class="info-value">
-              ${phone ? `<a href="tel:${phone}">${phone}</a>` : 'Not provided'}
-            </span>
+          <div class="card-content">
+            <div class="info-item">
+              <span class="info-label">Name</span>
+              <span class="info-value">${name || 'Not provided'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Email</span>
+              <span class="info-value">
+                <a href="mailto:${email}">${email || 'Not provided'}</a>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Phone</span>
+              <span class="info-value">
+                ${phone ? `<a href="tel:${phone}">${phone}</a>` : 'Not provided'}
+              </span>
+            </div>
           </div>
         </div>
         
-        <div class="contact-card">
-          <h3>📍 Address Details</h3>
-          <div class="info-row">
-            <span class="info-label">Full Address:</span>
-            <span class="info-value">${formattedAddress}</span>
+        <!-- Inquiry Details Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">📋</div>
+            <h3 class="card-title">Inquiry Details</h3>
+          </div>
+          <div class="card-content">
+            <div class="info-item">
+              <span class="info-label">Subject</span>
+              <span class="info-value">${subject || 'General Inquiry'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">ID</span>
+              <span class="info-value">#${Date.now().toString().slice(-8)}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Received</span>
+              <span class="info-value">
+                ${new Date().toLocaleString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </span>
+            </div>
           </div>
         </div>
       </div>
       
-      <div class="contact-card">
-        <h3>📝 Inquiry Details</h3>
-        <div class="info-row">
-          <span class="info-label">Subject:</span>
-          <span class="info-value">${subject || 'General Inquiry'}</span>
+      <!-- Address Card -->
+      <div class="card" style="margin-bottom: 32px;">
+        <div class="card-header">
+          <div class="card-icon">📍</div>
+          <h3 class="card-title">Address Information</h3>
         </div>
-        <div class="info-row">
-          <span class="info-label">Submitted:</span>
-          <span class="info-value">
-            ${new Date().toLocaleString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZoneName: 'short'
-            })}
-          </span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Inquiry ID:</span>
-          <span class="info-value">${Date.now()}</span>
+        <div class="address-block">
+          ${formattedAddress}
         </div>
       </div>
       
-      <div class="message-section">
-        <h3>💬 Customer Message</h3>
-        <div class="message-content">
+      <!-- Message Section -->
+      <div class="message-card">
+        <div class="message-header">
+          <div class="card-icon">💬</div>
+          <h3>Customer Message</h3>
+          <span class="message-badge">DIRECT FROM CUSTOMER</span>
+        </div>
+        <div class="message-body">
           ${message ? message.replace(/\n/g, '<br>') : 'No message provided'}
         </div>
       </div>
       
-      <div class="action-buttons">
-        <a href="mailto:${email}" class="action-button primary-button">
+      <!-- Action Buttons -->
+      <div class="action-grid">
+        <a href="mailto:${email}?subject=Re: ${encodeURIComponent(subject || 'Your Inquiry')}" class="btn btn-primary">
           <span>✉️</span>
           <span>Reply to Customer</span>
         </a>
-        <a href="tel:${phone || '(862) 450-6069'}" class="action-button secondary-button">
+        <a href="tel:${phone || '(862) 450-6069'}" class="btn btn-secondary">
           <span>📞</span>
           <span>${phone ? 'Call Customer' : 'Call Office'}</span>
         </a>
       </div>
       
-      <div class="meta-info">
+      <!-- Meta Information -->
+      <div class="meta-grid">
         <div class="meta-item">
           <span class="meta-label">Inquiry ID</span>
-          <span class="meta-value">${Date.now()}</span>
+          <span class="meta-value">#${Date.now().toString().slice(-8)}</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Source</span>
-          <span class="meta-value">Website Contact Form</span>
+          <span class="meta-value">Website Form</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Priority</span>
-          <span class="meta-value">High</span>
+          <span class="meta-value priority-high">High</span>
         </div>
         <div class="meta-item">
-          <span class="meta-label">Response Time</span>
-          <span class="meta-value">24-48 hours</span>
+          <span class="meta-label">Response Due</span>
+          <span class="meta-value">Within 24h</span>
         </div>
       </div>
     </div>
     
-    <!-- Footer -->
+    <!-- Modern Footer -->
     <div class="footer">
-      <img src="https://res.cloudinary.com/dbelveonz/image/upload/v1763586727/logoimg_i3npds.png" 
-           alt="Laminance Cabinetry" 
-           class="footer-logo">
-      <div class="footer-title">Laminance Cabinetry</div>
-      <p class="footer-info">
-        This email was automatically generated from the website contact form.<br>
-        Please use the reply button above to respond to the customer.
-      </p>
-      
-      <div class="footer-divider"></div>
-      
-      <div class="contact-links">
-        <a href="tel:(862)450-6069" class="contact-link">
-          <span>📞</span>
-          <span>(862) 450-6069</span>
-        </a>
-        <a href="mailto:contact@laminance.com" class="contact-link">
-          <span>✉️</span>
-          <span>contact@laminance.com</span>
-        </a>
-        <a href="https://laminancecabinetry.com" class="contact-link">
-          <span>🌐</span>
-          <span>laminancecabinetry.com</span>
-        </a>
+      <div class="footer-top">
+        <img src="https://res.cloudinary.com/dbelveonz/image/upload/v1763586727/logoimg_i3npds.png" 
+             alt="Laminance Cabinetry" 
+             class="logo">
+        <div class="footer-links">
+          <a href="tel:(862)450-6069" class="footer-link">📞 (862) 450-6069</a>
+          <a href="mailto:contact@laminance.com" class="footer-link">✉️ contact@laminance.com</a>
+          <a href="https://laminancecabinetry.com" class="footer-link">🌐 laminancecabinetry.com</a>
+        </div>
       </div>
-      
-      <div class="copyright">
+      <div class="footer-bottom">
         <p>© ${new Date().getFullYear()} Laminance Cabinetry. All rights reserved.</p>
-        <p>This is an automated notification. Please do not reply directly to this email.</p>
+        <p style="margin-top: 8px; font-size: 12px;">This is an automated notification from your website contact form. Please do not reply directly to this email.</p>
       </div>
     </div>
   </div>
