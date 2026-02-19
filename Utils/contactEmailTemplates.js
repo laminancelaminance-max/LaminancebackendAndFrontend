@@ -41,6 +41,105 @@ export const getAdminContactEmailTemplate = (contactData) => {
     return { date, time };
   };
 
+  // Check if both date and time are selected
+  const hasValidDateTime = () => {
+    const { date, time } = getPreferredConsultation();
+    return date && time && time !== 'Not specified';
+  };
+
+  // Generate calendar links only if both date and time exist
+  const generateCalendarLinks = () => {
+    const { date, time } = getPreferredConsultation();
+    
+    // Only generate links if we have both date AND time
+    if (!date || !time || time === 'Not specified') {
+      return null;
+    }
+
+    // Parse date and time
+    let startDate, endDate;
+    
+    try {
+      // Handle different date formats
+      if (date.includes('/')) {
+        const [month, day, year] = date.split('/');
+        startDate = new Date(`${year}-${month}-${day}`);
+      } else {
+        startDate = new Date(date);
+      }
+
+      // Parse time (assuming format like "10:00 AM" or "14:00")
+      const timeMatch = time.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+      if (timeMatch) {
+        let hours = parseInt(timeMatch[1]);
+        const minutes = parseInt(timeMatch[2]);
+        const meridian = timeMatch[3]?.toUpperCase();
+
+        if (meridian === 'PM' && hours < 12) hours += 12;
+        if (meridian === 'AM' && hours === 12) hours = 0;
+
+        startDate.setHours(hours, minutes, 0);
+      } else {
+        // If time parsing fails, don't create calendar links
+        return null;
+      }
+
+      // End date (1 hour later)
+      endDate = new Date(startDate);
+      endDate.setHours(endDate.getHours() + 1);
+
+    } catch (error) {
+      console.error('Error parsing date/time:', error);
+      return null;
+    }
+
+    const formatDateForCalendar = (date) => {
+      return date.toISOString().replace(/-|:|\.\d+/g, '');
+    };
+
+    const startFormatted = formatDateForCalendar(startDate);
+    const endFormatted = formatDateForCalendar(endDate);
+
+    const eventTitle = `Consultation with ${name || 'Client'}`;
+    const eventDetails = `Meeting with ${name || 'Client'}\nEmail: ${email || 'Not provided'}\nPhone: ${phone || 'Not provided'}`;
+    const eventLocation = formatAddress();
+
+    // Google Calendar link
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${startFormatted}/${endFormatted}&details=${encodeURIComponent(eventDetails)}&location=${encodeURIComponent(eventLocation)}&sf=true&output=xml`;
+
+    // Outlook/Office 365 link
+    const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=${encodeURIComponent(eventTitle)}&startdt=${startDate.toISOString()}&enddt=${endDate.toISOString()}&body=${encodeURIComponent(eventDetails)}&location=${encodeURIComponent(eventLocation)}`;
+
+    // Yahoo Calendar link
+    const yahooUrl = `https://calendar.yahoo.com/?v=60&title=${encodeURIComponent(eventTitle)}&st=${startFormatted}&et=${endFormatted}&desc=${encodeURIComponent(eventDetails)}&in_loc=${encodeURIComponent(eventLocation)}`;
+
+    // iCal/ICS file generation
+    const generateICS = () => {
+      const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Laminance Cabinetry//EN
+BEGIN:VEVENT
+UID:${Date.now()}@laminance.com
+DTSTAMP:${formatDateForCalendar(new Date())}
+DTSTART:${startFormatted}
+DTEND:${endFormatted}
+SUMMARY:${eventTitle}
+DESCRIPTION:${eventDetails.replace(/\n/g, '\\n')}
+LOCATION:${eventLocation}
+END:VEVENT
+END:VCALENDAR`;
+
+      return `data:text/calendar;charset=utf-8,${encodeURIComponent(icsContent)}`;
+    };
+
+    return {
+      google: googleCalendarUrl,
+      outlook: outlookUrl,
+      yahoo: yahooUrl,
+      ics: generateICS()
+    };
+  };
+
   // Submission time
   const getSubmissionInfo = () => {
     const dateObj = submissionDateTime ? new Date(submissionDateTime) : new Date();
@@ -60,6 +159,8 @@ export const getAdminContactEmailTemplate = (contactData) => {
   const formattedAddress = formatAddress();
   const preferredConsultation = getPreferredConsultation();
   const submission = getSubmissionInfo();
+  const hasDateTime = hasValidDateTime();
+  const calendarLinks = hasDateTime ? generateCalendarLinks() : null;
   const inquiryRef =
     reference || `LC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
@@ -75,7 +176,7 @@ export const getAdminContactEmailTemplate = (contactData) => {
     margin: 0;
     padding: 0;
     background-color: #f8fafc;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color: #334155;
   }
 
@@ -89,6 +190,7 @@ export const getAdminContactEmailTemplate = (contactData) => {
     background: #ffffff;
     border-radius: 12px;
     overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
   .header {
@@ -116,6 +218,7 @@ export const getAdminContactEmailTemplate = (contactData) => {
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 24px;
+    background: #ffffff;
   }
 
   .label {
@@ -124,6 +227,7 @@ export const getAdminContactEmailTemplate = (contactData) => {
     text-transform: uppercase;
     font-weight: 600;
     margin-bottom: 4px;
+    letter-spacing: 0.5px;
   }
 
   .value {
@@ -142,6 +246,90 @@ export const getAdminContactEmailTemplate = (contactData) => {
     line-height: 1.6;
     color: #475569;
     word-break: break-word;
+    border-radius: 4px;
+  }
+
+  .calendar-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  .calendar-btn {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-align: center;
+    flex: 1 1 auto;
+    min-width: 120px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .calendar-btn.google {
+    background: #4285f4;
+    color: white;
+    border: 1px solid #3367d6;
+  }
+
+  .calendar-btn.outlook {
+    background: #0078d4;
+    color: white;
+    border: 1px solid #0062a0;
+  }
+
+  .calendar-btn.yahoo {
+    background: #6001d2;
+    color: white;
+    border: 1px solid #4a01a8;
+  }
+
+  .calendar-btn.ics {
+    background: #34a853;
+    color: white;
+    border: 1px solid #2d8e48;
+  }
+
+  .calendar-btn:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .calendar-note {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 12px;
+    font-style: italic;
+    padding: 8px 12px;
+    background: #f1f5f9;
+    border-radius: 6px;
+  }
+
+  .date-time-badge {
+    display: inline-block;
+    background: #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+    margin-top: 4px;
+  }
+
+  .no-date-time-message {
+    padding: 12px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    color: #64748b;
+    font-size: 13px;
+    font-style: italic;
+    margin-top: 8px;
   }
 
   .footer {
@@ -150,16 +338,17 @@ export const getAdminContactEmailTemplate = (contactData) => {
     color: #94a3b8;
     text-align: center;
     border-top: 1px solid #f1f5f9;
+    background: #f8fafc;
   }
 </style>
 </head>
 
 <body>
-<table width="100%">
+<table width="100%" cellpadding="0" cellspacing="0">
 <tr>
-<td align="center">
+<td align="center" style="padding: 20px;">
 
-<table class="main" width="100%">
+<table class="main" width="100%" cellpadding="0" cellspacing="0">
 
 <tr>
 <td class="header">
@@ -168,8 +357,8 @@ export const getAdminContactEmailTemplate = (contactData) => {
     width="140"
     alt="Laminance"
     style="display:block;margin-bottom:16px;filter:brightness(0) invert(1);" />
-  <h2 style="margin:0;">Project Inquiry</h2>
-  <p style="margin:6px 0 0;color:#94a3b8;">
+  <h2 style="margin:0; font-size: 24px;">New Project Inquiry</h2>
+  <p style="margin:6px 0 0;color:#94a3b8; font-size: 14px;">
     Reference ID: ${inquiryRef}
   </p>
 </td>
@@ -178,64 +367,102 @@ export const getAdminContactEmailTemplate = (contactData) => {
 <tr>
 <td class="content">
 
-  <div class="section-title">Customer Dossier</div>
+  <!-- Customer Dossier Section -->
+  <div class="section-title">📋 CUSTOMER DOSSIER</div>
   <div class="card">
-
-    <div class="label">Full Name</div>
-    <div class="value">${name || 'Laminance Cabinetry'}</div>
-
-    <br />
-
-    <div class="label">Email Contact</div>
-    <div class="value">${email || 'Not provided'}</div>
-
-    <br />
-
-    <div class="label">Phone Number</div>
-    <div class="value">${phone || 'Not provided'}</div>
-
-    <br />
-
-    <div class="label">Project Location</div>
-    <div class="value">${formattedAddress}</div>
-
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td>
+          <div class="label">Full Name</div>
+          <div class="value">${name || 'Not provided'}</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top: 16px;">
+          <div class="label">Email Contact</div>
+          <div class="value">${email || 'Not provided'}</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top: 16px;">
+          <div class="label">Phone Number</div>
+          <div class="value">${phone || 'Not provided'}</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top: 16px;">
+          <div class="label">Project Location</div>
+          <div class="value">${formattedAddress}</div>
+        </td>
+      </tr>
+    </table>
   </div>
 
-  <div class="section-title">Consultation Logistics</div>
+  <!-- Consultation Logistics Section -->
+  <div class="section-title">📅 CONSULTATION LOGISTICS</div>
   <div class="card">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="50%">
+          <div class="label">Preferred Date</div>
+          <div class="value">${preferredConsultation.date || 'Not specified'}</div>
+        </td>
+        <td width="50%">
+          <div class="label">Preferred Time</div>
+          <div class="value">${preferredConsultation.time || 'Not specified'}</div>
+        </td>
+      </tr>
+      
+      ${calendarLinks ? `
+      <tr>
+        <td colspan="2" style="padding-top: 20px;">
+          <div class="label">⚡ ADD TO CALENDAR</div>
+          <div class="calendar-buttons">
+            <a href="${calendarLinks.google}" target="_blank" class="calendar-btn google">📅 Google Calendar</a>
+            <a href="${calendarLinks.outlook}" target="_blank" class="calendar-btn outlook">📅 Outlook</a>
+            <a href="${calendarLinks.yahoo}" target="_blank" class="calendar-btn yahoo">📅 Yahoo</a>
+            <a href="${calendarLinks.ics}" download="consultation-${inquiryRef}.ics" class="calendar-btn ics">📥 Download ICS</a>
+          </div>
+          <div class="calendar-note">
+            ⏰ Click any button to add this consultation to your calendar (1 hour duration)
+          </div>
+        </td>
+      </tr>
+      ` : preferredConsultation.date && !preferredConsultation.time ? `
+      <tr>
+        <td colspan="2" style="padding-top: 16px;">
+          <div class="no-date-time-message">
+            ⏳ Time not specified. Calendar buttons will appear when client selects a preferred time.
+          </div>
+        </td>
+      </tr>
+      ` : ''}
 
-    <div class="label">Preferred Date</div>
-    <div class="value">${preferredConsultation.date || 'Not specified'}</div>
-
-    <br />
-
-    <div class="label">Preferred Time</div>
-    <div class="value">${preferredConsultation.time || 'Not specified'}</div>
-
-    ${
-      originalPreferredDate || originalPreferredTime
-        ? `
-          <br />
-          <div class="label">Original Input</div>
-          <div class="value" style="font-size:13px;color:#64748b;">
+      ${originalPreferredDate || originalPreferredTime ? `
+      <tr>
+        <td colspan="2" style="padding-top: 16px;">
+          <div class="label">📝 Original Input</div>
+          <div class="value" style="font-size:13px;color:#64748b; background: #f8fafc; padding: 8px; border-radius: 4px;">
             ${originalPreferredDate || ''} ${originalPreferredTime || ''}
           </div>
-        `
-        : ''
-    }
-
+        </td>
+      </tr>
+      ` : ''}
+    </table>
   </div>
 
-  <div class="section-title">Inquiry Context</div>
-  <div class="label">Subject</div>
-  <div class="value" style="font-weight:700;">
-    ${subject || 'General Inquiry'}
-  </div>
+  <!-- Inquiry Context Section -->
+  <div class="section-title">💬 INQUIRY CONTEXT</div>
+  <div class="card">
+    <div class="label">Subject</div>
+    <div class="value" style="font-weight:700; margin-bottom: 16px;">
+      ${subject || 'General Inquiry'}
+    </div>
 
-  <br />
-
-  <div class="message-box">
-    ${message ? message.replace(/\n/g, '<br />') : 'No message provided'}
+    <div class="label">Message</div>
+    <div class="message-box">
+      ${message ? message.replace(/\n/g, '<br />') : 'No message provided'}
+    </div>
   </div>
 
 </td>
@@ -243,9 +470,15 @@ export const getAdminContactEmailTemplate = (contactData) => {
 
 <tr>
 <td class="footer">
-  Submitted on ${submission.date} at ${submission.time}
-  from IP: ${ipAddress || 'Not available'}<br />
-  © ${new Date().getFullYear()} Laminance Cabinetry Studio
+  <div style="margin-bottom: 8px;">
+    ✅ Submitted on ${submission.date} at ${submission.time}
+  </div>
+  <div style="margin-bottom: 4px;">
+    🌐 IP: ${ipAddress || 'Not available'}
+  </div>
+  <div>
+    © ${new Date().getFullYear()} Laminance Cabinetry Studio · All rights reserved
+  </div>
 </td>
 </tr>
 
@@ -254,6 +487,19 @@ export const getAdminContactEmailTemplate = (contactData) => {
 </td>
 </tr>
 </table>
+
+<!-- Fallback text for email clients -->
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+<td align="center" style="padding: 10px;">
+  <div style="font-size: 11px; color: #94a3b8; text-align: center; max-width: 600px; margin: 0 auto;">
+    Reference: ${inquiryRef} | 
+    ${hasDateTime ? `Consultation: ${preferredConsultation.date} at ${preferredConsultation.time}` : 'No consultation time specified'}
+  </div>
+</td>
+</tr>
+</table>
+
 </body>
 </html>`;
 };
