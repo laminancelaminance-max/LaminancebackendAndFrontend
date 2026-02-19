@@ -492,6 +492,11 @@
 // export default Contact;
 
 
+
+
+
+
+
 import mongoose from 'mongoose';
 
 const addressSchema = new mongoose.Schema({
@@ -554,23 +559,32 @@ const contactSchema = new mongoose.Schema({
     trim: true,
     maxlength: [20, 'Phone number cannot exceed 20 characters']
   },
+  // Add preferredDate and preferredTime fields (optional)
+  preferredDate: {
+    type: Date,
+    default: null
+  },
+  preferredTime: {
+    type: String,
+    default: '',
+    trim: true,
+    maxlength: [50, 'Time slot cannot exceed 50 characters']
+  },
   address: {
     type: addressSchema,
     default: () => ({})
   },
   subject: {
     type: String,
-    required: [true, 'Subject is required'],
     trim: true,
     minlength: [2, 'Subject must be at least 2 characters'],
     maxlength: [200, 'Subject cannot exceed 200 characters']
   },
   message: {
     type: String,
-    required: [true, 'Message is required'],
     trim: true,
-    minlength: [5, 'Message must be at least 5 characters'],
-    maxlength: [2000, 'Message cannot exceed 2000 characters']
+    maxlength: [2000, 'Message cannot exceed 2000 characters'],
+    default: ''  // Make message optional by setting default
   },
   sendCopy: {
     type: Boolean,
@@ -631,19 +645,23 @@ contactSchema.index({ ipAddress: 1 });
 contactSchema.index({ createdAt: -1 });
 contactSchema.index({ 'geoLocation.country': 1 });
 contactSchema.index({ isBlocked: 1 });
+contactSchema.index({ preferredDate: 1 }); // Add index for date queries
 
 // Pre-save middleware to prevent spam
 contactSchema.pre('save', function(next) {
-  // Basic spam check (can be enhanced)
-  const spamKeywords = ['viagra', 'cialis', 'casino', 'porn', 'xxx'];
-  const message = this.message.toLowerCase();
-  
-  for (const keyword of spamKeywords) {
-    if (message.includes(keyword)) {
-      this.status = 'spam';
-      this.isBlocked = true;
-      this.blockedReason = `Contains spam keyword: ${keyword}`;
-      break;
+  // Only check spam if message exists
+  if (this.message && this.message.length > 0) {
+    // Basic spam check (can be enhanced)
+    const spamKeywords = ['viagra', 'cialis', 'casino', 'porn', 'xxx'];
+    const message = this.message.toLowerCase();
+    
+    for (const keyword of spamKeywords) {
+      if (message.includes(keyword)) {
+        this.status = 'spam';
+        this.isBlocked = true;
+        this.blockedReason = `Contains spam keyword: ${keyword}`;
+        break;
+      }
     }
   }
   

@@ -766,7 +766,6 @@
 // };
 
 
-
 import Contact from '../models/Contact.js';
 import { sendEmail } from '../Utils/emailService.js';
 import { sendAppointmentEmail, testAppointmentEmail } from '../Utils/emailService.js';
@@ -798,8 +797,7 @@ const getUserAgent = (req) => {
   return req.headers['user-agent'] || '';
 };
 
-// Submit contact form - UPDATED WITH IP HANDLING
-// Submit contact form - FIXED VERSION
+// Submit contact form - UPDATED WITH MINIMAL CHANGES
 export const submitContact = async (req, res) => {
   try {
     console.log('Contact form submission received from:', {
@@ -809,14 +807,15 @@ export const submitContact = async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    const { name, email, phone, address, subject, message, sendCopy = true } = req.body;
+    const { name, email, phone, address, preferredDate,
+      preferredTime, subject, message, sendCopy = true } = req.body;
 
-    // Validate required fields
-    if (!name || !phone || !subject || !message) {
+    // ✅ UPDATED VALIDATION - removed message from required fields
+    if (!name || !phone) {
       console.log('Validation failed - missing required fields');
       return res.status(400).json({
         success: false,
-        message: 'Name, phone, subject, and message are required'
+        message: 'Name and phone number are required'
       });
     }
 
@@ -824,14 +823,58 @@ export const submitContact = async (req, res) => {
     const clientIP = getClientIP(req);
     const userAgent = getUserAgent(req);
 
-    // Create new contact with IP and user agent
+    // Format preferred date if provided
+    let formattedPreferredDate = null;
+    if (preferredDate) {
+      try {
+        const date = new Date(preferredDate);
+        formattedPreferredDate = {
+          iso: date.toISOString(),
+          formatted: date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          original: preferredDate
+        };
+      } catch (dateError) {
+        console.error('Error formatting date:', dateError);
+        formattedPreferredDate = {
+          iso: null,
+          formatted: 'Invalid date',
+          original: preferredDate
+        };
+      }
+    }
+
+    // Format preferred time
+    let formattedPreferredTime = preferredTime || 'Not specified';
+    if (preferredTime && preferredTime.includes(':')) {
+      try {
+        const [hours, minutes] = preferredTime.split(':');
+        const time = new Date();
+        time.setHours(parseInt(hours), parseInt(minutes));
+        formattedPreferredTime = time.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+      } catch (timeError) {
+        console.error('Error formatting time:', timeError);
+      }
+    }
+
+    // ✅ UPDATED - Create new contact with optional message and date/time fields
     const newContact = new Contact({
       name,
       email,
       phone,
       address,
       subject,
-      message,
+      preferredDate: preferredDate || null,      // Optional - stays as is
+      preferredTime: preferredTime || '',        // Optional - stays as is
+      message: message || '',                      // ✅ ADDED fallback for optional message
       sendCopy,
       status: 'new',
       ipAddress: clientIP,
@@ -847,18 +890,50 @@ export const submitContact = async (req, res) => {
     const savedContact = await newContact.save();
     console.log('✅ Contact saved to database:', savedContact._id);
     
-    // Prepare contact data for emails
+    // Get current timestamp for submission
+    const submissionTimestamp = new Date();
+    const formattedSubmissionDate = submissionTimestamp.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const formattedSubmissionTime = submissionTimestamp.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+
+    // ✅ UPDATED - Prepare enhanced contact data for emails with optional message
     const contactData = {
       name,
-      email: email || 'Not provided', // Handle missing email
+      email: email || 'Not provided',
       phone,
-      address,
+      address: address || 'Not provided',
       subject,
-      message,
-      timestamp: new Date().toISOString(),
+      message: message || 'No message provided',    // ✅ ADDED fallback for optional message
+      // Submission timestamp
+      submissionDate: formattedSubmissionDate,
+      submissionTime: formattedSubmissionTime,
+      submissionDateTime: `${formattedSubmissionDate} at ${formattedSubmissionTime}`,
+      submissionISO: submissionTimestamp.toISOString(),
+      // Preferred date and time (if provided)
+      preferredDate: formattedPreferredDate,
+      preferredTime: formattedPreferredTime,
+      preferredDateTime: preferredDate && preferredTime 
+        ? `${formattedPreferredDate?.formatted || preferredDate} at ${formattedPreferredTime}`
+        : preferredDate 
+          ? `${formattedPreferredDate?.formatted || preferredDate} (Time not specified)`
+          : 'Not specified',
+      // Original values
+      originalPreferredDate: preferredDate || 'Not provided',
+      originalPreferredTime: preferredTime || 'Not provided',
+      // Metadata
       ipAddress: clientIP,
       userAgent: userAgent,
-      geoLocation: newContact.geoLocation
+      geoLocation: newContact.geoLocation,
+      reference: savedContact._id.toString()
     };
 
     // ===== SEND EMAILS =====
@@ -879,7 +954,7 @@ export const submitContact = async (req, res) => {
         
         const adminResult = await sendEmail({
           sendTo: process.env.ADMIN_EMAIL,
-          subject: `📩 New Contact: ${subject} - Laminance Cabinetry`,
+          subject: `📩 New Contact: ${subject} - ${formattedSubmissionDate} - Laminance Cabinetry`,
           html: adminEmailContent
         });
         
@@ -908,7 +983,7 @@ export const submitContact = async (req, res) => {
         
         const userResult = await sendEmail({
           sendTo: email,
-          subject: `✅ Thank You for Contacting Laminance Cabinetry`,
+          subject: `✅ Thank You for Contacting Laminance Cabinetry - ${formattedSubmissionDate}`,
           html: userEmailContent
         });
         
@@ -935,6 +1010,10 @@ export const submitContact = async (req, res) => {
       data: {
         id: savedContact._id,
         submittedAt: savedContact.createdAt,
+        submittedDate: formattedSubmissionDate,
+        submittedTime: formattedSubmissionTime,
+        preferredDate: formattedPreferredDate?.formatted || preferredDate,  // ✅ Keep as is
+        preferredTime: formattedPreferredTime,                               // ✅ Keep as is
         ipAddress: clientIP,
         emailStatus: {
           admin: emailResults.admin,
@@ -1350,7 +1429,7 @@ export const resendConfirmationEmail = async (req, res) => {
       phone: contact.phone,
       address: contact.address,
       subject: contact.subject,
-      message: contact.message,
+      message: contact.message || 'No message provided',  // ✅ ADDED fallback
       timestamp: contact.createdAt.toISOString()
     };
 
