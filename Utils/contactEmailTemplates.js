@@ -353,7 +353,7 @@ END:VCALENDAR`;
 <tr>
 <td class="header">
   <img
-    src="https://res.cloudinary.com/dbelveonz/image/upload/v1763586727/logoimg_i3npds.png"
+    src="https://laminance.com/assets/Images/logoimg.png"
     width="140"
     alt="Laminance"
     style="display:block;margin-bottom:16px;filter:brightness(0) invert(1);" />
@@ -622,7 +622,7 @@ export const getUserContactEmailTemplate = (contactData) => {
           <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 30px; background-color: rgba(255,255,255,0.7); text-align: center;">
-              <img src="https://res.cloudinary.com/dbelveonz/image/upload/v1763586727/logoimg_i3npds.png" alt="Laminance" style="height: 50px; margin-bottom: 20px; filter: brightness(0) invert(1);">
+              <img src="https://laminance.com/assets/Images/logoimg.png" alt="Laminance" style="height: 50px; margin-bottom: 20px; filter: brightness(0) invert(1);">
               <h1 style="color: #1a2d3b; font-size: 26px; font-weight: 300; letter-spacing: 1px; margin: 0;">THANK YOU</h1>
               <p style="color: #1a2d3b; font-size: 14px; margin-top: 8px; text-transform: uppercase; letter-spacing: 2px;">Inquiry Received</p>
             </td>

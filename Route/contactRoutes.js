@@ -24,84 +24,62 @@
 
 
 
-  import express from 'express';
+import express from 'express';
 import {
   submitContact,
-  getAllContacts,
-  getContactById,
-  updateContactStatus,
-  deleteContact,
-  getContactStats,
   sendAppointment,
   testEmail,
-  resendConfirmationEmail,
-  testIP  // Add this new route
+  testIP
 } from '../controller/contactController.js';
 
 const router = express.Router();
 
-// Rate limiting middleware for US IPs
+// Simple Rate Limiter
 const rateLimitMiddleware = (req, res, next) => {
-  // Skip rate limiting for admin routes
-  if (req.path.includes('/admin/')) {
-    return next();
-  }
-  
-  // Simple rate limiting based on IP
   const ip = req.ip || req.connection.remoteAddress;
   const now = Date.now();
-  
-  // Store in memory (in production, use Redis or similar)
+
   if (!global.rateLimit) {
     global.rateLimit = {};
   }
-  
+
   if (!global.rateLimit[ip]) {
     global.rateLimit[ip] = {
       count: 1,
-      firstRequest: now,
-      lastRequest: now
+      firstRequest: now
     };
   } else {
-    const timeDiff = now - global.rateLimit[ip].firstRequest;
-    
-    // Reset if more than 1 hour has passed
-    if (timeDiff > 60 * 60 * 1000) {
+    const diff = now - global.rateLimit[ip].firstRequest;
+
+    if (diff > 60 * 60 * 1000) {
       global.rateLimit[ip] = {
         count: 1,
-        firstRequest: now,
-        lastRequest: now
+        firstRequest: now
       };
     } else {
-      // Allow 5 requests per hour
       if (global.rateLimit[ip].count >= 5) {
         return res.status(429).json({
           success: false,
-          message: 'Too many requests. Please try again later.'
+          message: "Too many requests. Try again later."
         });
       }
       global.rateLimit[ip].count++;
-      global.rateLimit[ip].lastRequest = now;
     }
   }
-  
+
   next();
 };
 
-// Public routes
+// Contact form
 router.post('/submit', rateLimitMiddleware, submitContact);
-router.get('/test-ip', testIP); // Add IP test route
 
-// Admin routes (protected - add authentication middleware as needed)
-router.get('/admin/all', getAllContacts);
-router.get('/admin/stats', getContactStats);
-router.get('/admin/:id', getContactById);
-router.put('/admin/:id/status', updateContactStatus);
-router.delete('/admin/:id', deleteContact);
-
-// Email routes
+// Appointment booking
 router.post('/appointment', sendAppointment);
+
+// Test email
 router.post('/test-email', testEmail);
-router.post('/resend-confirmation/:id', resendConfirmationEmail);
+
+// Debug route
+router.get('/test-ip', testIP);
 
 export default router;

@@ -75,7 +75,7 @@ const orderSchema = new mongoose.Schema({
 });
 
 // Add indexes for better performance
-orderSchema.index({ invoiceId: 1 });
+// orderSchema.index({ invoiceId: 1 });
 orderSchema.index({ user: 1 }); // Add user index
 orderSchema.index({ "customerInfo.email": 1 });
 orderSchema.index({ status: 1 });

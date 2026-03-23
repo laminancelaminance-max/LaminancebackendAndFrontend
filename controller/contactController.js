@@ -766,7 +766,7 @@
 // };
 
 
-import Contact from '../models/Contact.js';
+
 import { sendEmail } from '../Utils/emailService.js';
 import { sendAppointmentEmail, testAppointmentEmail } from '../Utils/emailService.js';
 import { 
@@ -866,29 +866,29 @@ export const submitContact = async (req, res) => {
     }
 
     // ✅ UPDATED - Create new contact with optional message and date/time fields
-    const newContact = new Contact({
-      name,
-      email,
-      phone,
-      address,
-      subject,
-      preferredDate: preferredDate || null,      // Optional - stays as is
-      preferredTime: preferredTime || '',        // Optional - stays as is
-      message: message || '',                      // ✅ ADDED fallback for optional message
-      sendCopy,
-      status: 'new',
-      ipAddress: clientIP,
-      userAgent: userAgent,
-      submittedFrom: req.headers.origin || 'unknown',
-      geoLocation: {
-        country: req.headers['cf-ipcountry'] || 'unknown',
-        region: req.headers['cf-region'] || 'unknown'
-      }
-    });
+    // const newContact = new Contact({
+    //   name,
+    //   email,
+    //   phone,
+    //   address,
+    //   subject,
+    //   preferredDate: preferredDate || null,      // Optional - stays as is
+    //   preferredTime: preferredTime || '',        // Optional - stays as is
+    //   message: message || '',                      // ✅ ADDED fallback for optional message
+    //   sendCopy,
+    //   status: 'new',
+    //   ipAddress: clientIP,
+    //   userAgent: userAgent,
+    //   submittedFrom: req.headers.origin || 'unknown',
+    //   geoLocation: {
+    //     country: req.headers['cf-ipcountry'] || 'unknown',
+    //     region: req.headers['cf-region'] || 'unknown'
+    //   }
+    // });
 
-    // Save to database
-    const savedContact = await newContact.save();
-    console.log('✅ Contact saved to database:', savedContact._id);
+    // // Save to database
+    // const savedContact = await newContact.save();
+    // console.log('✅ Contact saved to database:', savedContact._id);
     
     // Get current timestamp for submission
     const submissionTimestamp = new Date();
@@ -932,8 +932,11 @@ export const submitContact = async (req, res) => {
       // Metadata
       ipAddress: clientIP,
       userAgent: userAgent,
-      geoLocation: newContact.geoLocation,
-      reference: savedContact._id.toString()
+      geoLocation: {
+  country: req.headers['cf-ipcountry'] || 'unknown',
+  region: req.headers['cf-region'] || 'unknown'
+},
+reference: `REF-${Date.now()}`
     };
 
     // ===== SEND EMAILS =====
@@ -1008,8 +1011,8 @@ export const submitContact = async (req, res) => {
       success: true,
       message: 'Contact form submitted successfully',
       data: {
-        id: savedContact._id,
-        submittedAt: savedContact.createdAt,
+        id: `REF-${Date.now()}`,
+        submittedAt: submissionTimestamp,
         submittedDate: formattedSubmissionDate,
         submittedTime: formattedSubmissionTime,
         preferredDate: formattedPreferredDate?.formatted || preferredDate,  // ✅ Keep as is
@@ -1054,264 +1057,18 @@ export const submitContact = async (req, res) => {
 };
 
 // Get all contacts (for admin panel)
-export const getAllContacts = async (req, res) => {
-  try {
-    const { 
-      page = 1, 
-      limit = 10, 
-      status, 
-      priority, 
-      category, 
-      search,
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
-    } = req.query;
 
-    // Build filter
-    const filter = {};
-    if (status) filter.status = status;
-    if (priority) filter.priority = priority;
-    if (category) filter.category = category;
-    
-    // Search filter
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { subject: { $regex: search, $options: 'i' } },
-        { message: { $regex: search, $options: 'i' } },
-        { 'address.city': { $regex: search, $options: 'i' } },
-        { 'address.state': { $regex: search, $options: 'i' } }
-      ];
-    }
-
-    // Sort
-    const sort = {};
-    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-
-    // Pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    
-    const [contacts, total] = await Promise.all([
-      Contact.find(filter)
-        .sort(sort)
-        .skip(skip)
-        .limit(parseInt(limit))
-        .select('-__v'),
-      Contact.countDocuments(filter)
-    ]);
-
-    res.json({
-      success: true,
-      data: contacts,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit)),
-        hasNext: parseInt(page) < Math.ceil(total / parseInt(limit)),
-        hasPrev: parseInt(page) > 1
-      }
-    });
-    
-  } catch (error) {
-    console.error('Error fetching contacts:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching contacts',
-      error: error.message
-    });
-  }
-};
 
 // Get single contact
-export const getContactById = async (req, res) => {
-  try {
-    const contact = await Contact.findById(req.params.id);
-    
-    if (!contact) {
-      return res.status(404).json({
-        success: false,
-        message: 'Contact not found'
-      });
-    }
 
-    res.json({
-      success: true,
-      data: contact
-    });
-    
-  } catch (error) {
-    console.error('Error fetching contact:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching contact',
-      error: error.message
-    });
-  }
-};
 
 // Update contact status
-export const updateContactStatus = async (req, res) => {
-  try {
-    const { status, priority, category, notes } = req.body;
-    
-    const updateData = { 
-      updatedAt: Date.now()
-    };
-    
-    if (status) updateData.status = status;
-    if (priority) updateData.priority = priority;
-    if (category) updateData.category = category;
-    if (notes !== undefined) updateData.notes = notes;
-
-    const contact = await Contact.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
-
-    if (!contact) {
-      return res.status(404).json({
-        success: false,
-        message: 'Contact not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Contact updated successfully',
-      data: contact
-    });
-    
-  } catch (error) {
-    console.error('Error updating contact:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error updating contact',
-      error: error.message
-    });
-  }
-};
 
 // Delete contact
-export const deleteContact = async (req, res) => {
-  try {
-    const contact = await Contact.findByIdAndDelete(req.params.id);
-    
-    if (!contact) {
-      return res.status(404).json({
-        success: false,
-        message: 'Contact not found'
-      });
-    }
 
-    res.json({
-      success: true,
-      message: 'Contact deleted successfully'
-    });
-    
-  } catch (error) {
-    console.error('Error deleting contact:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting contact',
-      error: error.message
-    });
-  }
-};
 
 // Get contact statistics
-export const getContactStats = async (req, res) => {
-  try {
-    const stats = await Contact.aggregate([
-      {
-        $facet: {
-          statusCounts: [
-            { $group: { _id: '$status', count: { $sum: 1 } } }
-          ],
-          priorityCounts: [
-            { $group: { _id: '$priority', count: { $sum: 1 } } }
-          ],
-          categoryCounts: [
-            { $group: { _id: '$category', count: { $sum: 1 } } }
-          ],
-          dailySubmissions: [
-            {
-              $group: {
-                _id: {
-                  $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
-                },
-                count: { $sum: 1 }
-              }
-            },
-            { $sort: { _id: -1 } },
-            { $limit: 7 }
-          ],
-          monthlySubmissions: [
-            {
-              $group: {
-                _id: {
-                  $dateToString: { format: '%Y-%m', date: '$createdAt' }
-                },
-                count: { $sum: 1 }
-              }
-            },
-            { $sort: { _id: -1 } },
-            { $limit: 6 }
-          ],
-          totalContacts: [
-            { $count: 'count' }
-          ],
-          byCountry: [
-            { 
-              $group: { 
-                _id: '$geoLocation.country', 
-                count: { $sum: 1 } 
-              } 
-            },
-            { $sort: { count: -1 } }
-          ]
-        }
-      }
-    ]);
 
-    const formattedStats = {
-      total: stats[0].totalContacts[0]?.count || 0,
-      byStatus: stats[0].statusCounts.reduce((acc, curr) => {
-        acc[curr._id || 'unknown'] = curr.count;
-        return acc;
-      }, {}),
-      byPriority: stats[0].priorityCounts.reduce((acc, curr) => {
-        acc[curr._id || 'unknown'] = curr.count;
-        return acc;
-      }, {}),
-      byCategory: stats[0].categoryCounts.reduce((acc, curr) => {
-        acc[curr._id || 'unknown'] = curr.count;
-        return acc;
-      }, {}),
-      byCountry: stats[0].byCountry.reduce((acc, curr) => {
-        acc[curr._id || 'unknown'] = curr.count;
-        return acc;
-      }, {}),
-      recentSubmissions: stats[0].dailySubmissions,
-      monthlyTrends: stats[0].monthlySubmissions
-    };
-
-    res.json({
-      success: true,
-      data: formattedStats
-    });
-    
-  } catch (error) {
-    console.error('Error fetching stats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching contact statistics',
-      error: error.message
-    });
-  }
-};
 
 // Test endpoint for IP debugging
 export const testIP = async (req, res) => {
@@ -1410,48 +1167,3 @@ export const testEmail = async (req, res) => {
 };
 
 // Resend confirmation email to user
-export const resendConfirmationEmail = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const contact = await Contact.findById(id);
-    
-    if (!contact) {
-      return res.status(404).json({
-        success: false,
-        message: 'Contact not found'
-      });
-    }
-
-    const contactData = {
-      name: contact.name,
-      email: contact.email,
-      phone: contact.phone,
-      address: contact.address,
-      subject: contact.subject,
-      message: contact.message || 'No message provided',  // ✅ ADDED fallback
-      timestamp: contact.createdAt.toISOString()
-    };
-
-    const userEmailContent = getUserContactEmailTemplate(contactData);
-
-    await sendEmail({
-      sendTo: contact.email,
-      subject: `✅ Confirmation: ${contact.subject} - Laminance Cabinetry`,
-      html: userEmailContent
-    });
-
-    res.json({
-      success: true,
-      message: 'Confirmation email resent successfully'
-    });
-    
-  } catch (error) {
-    console.error('Error resending confirmation email:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error resending confirmation email',
-      error: error.message
-    });
-  }
-};
